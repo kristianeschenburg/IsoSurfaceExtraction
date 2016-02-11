@@ -42,6 +42,12 @@ typedef struct PlyColorFace
 	int *vertices;
 	float r , g , b;
 } PlyColorFace;
+typedef struct PlyCubeIdxFace
+{
+	unsigned int nr_vertices;
+	int *vertices;
+	int i, j, k;
+} PlyCubeIdxFace;
 typedef struct PlyStrip
 {
 	unsigned int nr_vertices;
@@ -62,6 +68,13 @@ static PlyProperty color_face_props[] =
 	{ "red"   , PLY_FLOAT , PLY_FLOAT , offsetof( PlyColorFace , r ) , 0 , 0 , 0 , 0 } ,
 	{ "green" , PLY_FLOAT , PLY_FLOAT , offsetof( PlyColorFace , g ) , 0 , 0 , 0 , 0 } ,
 	{ "blue"  , PLY_FLOAT , PLY_FLOAT , offsetof( PlyColorFace , b ) , 0 , 0 , 0 , 0 } ,
+};
+static PlyProperty cube_idx_face_props[] = 
+{
+	{ "vertex_indices" , PLY_INT , PLY_INT , offsetof( PlyCubeIdxFace , vertices ) , 1 , PLY_INT , PLY_INT , offsetof( PlyCubeIdxFace , nr_vertices ) } ,
+	{ "i" , PLY_INT , PLY_INT , offsetof( PlyCubeIdxFace , i ) , 0 , 0 , 0 , 0 } ,
+	{ "j" , PLY_INT , PLY_INT , offsetof( PlyCubeIdxFace , j ) , 0 , 0 , 0 , 0 } ,
+	{ "k" , PLY_INT , PLY_INT , offsetof( PlyCubeIdxFace , k ) , 0 , 0 , 0 , 0 } ,
 };
 static PlyProperty strip_props[] =
 {
@@ -1188,6 +1201,65 @@ int PlyWriteTriangles( const char* fileName ,
 		ply_face.nr_vertices = 3;
 		for( int j=0 ;j<3; j++ ) ply_face.vertices[j] = triangles[i][j];
 		ply_put_element( ply, (void *) &ply_face );
+	}
+
+	delete[] ply_face.vertices;
+	ply_close( ply );
+	return 1;
+#endif
+}
+template< class Vertex >
+int PlyWriteCubeIdxTriangles( const char* fileName ,
+					   const std::vector< Vertex >& vertices , 
+             const std::vector< TriangleIndexWithData<int> >& triangles ,
+					   PlyProperty* vertexProperties , int vertexPropertyNum ,
+					   int file_type ,
+					   char** comments , const int& commentNum)
+{
+#if 0
+	std::vector< std::vector< int > > polygons;
+	polygons.resize( triangles.size() );
+	for( int i=0 ; i<triangles.size() ; i++ )
+	{
+		polygons[i].resize( 3 );
+		for( int j=0 ; j<3 ; j++ ) polygons[i][j] = triangles[i][j];
+	}
+#else
+	int nr_vertices=int( vertices.size() );
+	int nr_faces=int( triangles.size() );
+	float version;
+	PlyFile *ply = ply_open_for_writing( fileName , 2 , elem_names , file_type , &version );
+	if ( !ply ) return 0;
+	
+	ply_element_count( ply , "vertex" , nr_vertices );
+	for( int i=0 ; i<vertexPropertyNum ; i++ ) ply_describe_property( ply , "vertex" , &vertexProperties[i] );
+	
+	ply_element_count( ply , "face" , nr_faces );
+	for ( int i=0; i<4; i++ ) ply_describe_property( ply , "face" , &cube_idx_face_props[i] );
+	
+	// Write in the comments
+	if( comments && commentNum ) for( int i=0 ; i<commentNum ; i++ ) ply_put_comment( ply , comments[i] );
+
+	ply_header_complete(ply);
+	
+	// write vertices
+	ply_put_element_setup( ply , "vertex" );
+	for(unsigned int i=0 ; i<vertices.size() ; i++ ) ply_put_element( ply , (void *) &vertices[i] );
+
+	// write faces
+	PlyCubeIdxFace ply_face;
+	ply_face.nr_vertices = 3;
+	ply_face.vertices = new int[3];
+
+	ply_put_element_setup( ply , "face" );
+	for (int i=0; i < nr_faces; i++)
+	{
+		ply_face.nr_vertices = 3;
+		for( int j=0 ;j<3; j++ ) ply_face.vertices[j] = triangles[i][j];
+		ply_face.i = triangles[i].data[0];
+		ply_face.j = triangles[i].data[1];
+		ply_face.k = triangles[i].data[2];
+    ply_put_element( ply, (void *) &ply_face );
 	}
 
 	delete[] ply_face.vertices;

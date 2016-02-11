@@ -117,7 +117,7 @@ struct IsoVertex
 #undef _ABS_
 };
 
-void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) values , float isoValue , std::vector< IsoVertex >& vertices , std::vector< std::vector< int > >& polygons , bool fullCaseTable , bool quadratic , bool flip )
+void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) values , float isoValue , std::vector< IsoVertex >& vertices , std::vector< std::vector< int > >& polygons, std::vector< std::vector< int > >& polygon_cubes , bool fullCaseTable , bool quadratic , bool flip )
 {
 #define INDEX( x , y , z ) ( std::min< int >( resX-1 , std::max< int >( 0 , (x) ) ) + std::min< int >( resY-1 , std::max< int >( 0 , (y) ) )*resX + std::min< int >( resZ-1 , std::max< int >( 0 , (z) ) )*resX*resY )
 	std::map< long long , int > isoVertexMap[3];
@@ -206,7 +206,11 @@ void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) v
 #pragma omp parallel for
 	for( int i=0 ; i<resX-1 ; i++ ) for( int j=0 ; j<resY-1 ; j++ ) for( int k=0 ; k<resZ-1 ; k++ )
 	{
-		float _values[Cube::CORNERS];
+    int ids[3];
+    ids[0] = i; ids[1] = j; ids[2] = k;
+    std::vector<int> id(std::begin(ids), std::end(ids));
+    
+    float _values[Cube::CORNERS];
 		for( int cx=0 ; cx<2 ; cx++ ) for( int cy=0 ; cy<2 ; cy++ ) for( int cz=0 ; cz<2 ; cz++ ) _values[ Cube::CornerIndex( cx , cy , cz ) ] = values[ (i+cx) + (j+cy)*resX + (k+cz)*resX*resY ];
 		int mcIndex = fullCaseTable ? MarchingCubes::GetFullIndex( _values , isoValue ) : MarchingCubes::GetIndex( _values , isoValue );
 		const std::vector< std::vector< int > >& isoPolygons = MarchingCubes::caseTable( mcIndex , fullCaseTable );
@@ -230,8 +234,11 @@ void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) v
 				if( flip ) polygon[polygon.size()-1-v] = iter->second;
 				else       polygon[v] = iter->second;
 			}
-#pragma omp critical
-			polygons.push_back( polygon );
+#pragma omp critical 
+{
+      polygons.push_back( polygon );
+      polygon_cubes.push_back( id );
+}
 		}
 	}
 	DeletePointer( flags );
@@ -305,7 +312,8 @@ int main( int argc , char* argv[] )
 
 	std::vector< IsoVertex > vertices;
 	std::vector< std::vector< int > > polygons;
-	ExtractIsoSurface( Resolution.values[0] , Resolution.values[1] , Resolution.values[2] , voxelValues , IsoValue.value , vertices , polygons , FullCaseTable.set , QuadraticFit.set , FlipOrientation.set );
+  std::vector< std::vector< int > > polygon_cubes;
+	ExtractIsoSurface( Resolution.values[0] , Resolution.values[1] , Resolution.values[2] , voxelValues , IsoValue.value , vertices , polygons , polygon_cubes, FullCaseTable.set , QuadraticFit.set , FlipOrientation.set );
 	DeletePointer( voxelValues );
 
 	if( Out.set )
@@ -319,7 +327,8 @@ int main( int argc , char* argv[] )
 		}
 		else
 		{
-			std::vector< TriangleIndex > triangles;
+			std::vector< TriangleIndexWithData<int> > triangles;
+      std::vector< std::vector< int > > triangle_cubes; 
 			MinimalAreaTriangulation< float > mat;
 
 			for( int i=0 ; i<polygons.size() ; i++ )
@@ -334,7 +343,7 @@ int main( int argc , char* argv[] )
 							if( IsoVertex::CoFacial( vertices[ polygons[i][j] ] , vertices[ polygons[i][k] ] ) ) isCofacial = true;
 				if( isCofacial )
 				{
-					TriangleIndex triangle;
+					TriangleIndexWithData<int> triangle;
 					PlyVertex< float > plyVertex;
 					for( int j=0 ; j<(int)polygons[i].size() ; j++ ) plyVertex.point += vertices[ polygons[i][j] ].p;
 					plyVertex.point /= (float)polygons[i].size();
@@ -346,7 +355,8 @@ int main( int argc , char* argv[] )
 						triangle[0] = polygons[i][j];
 						triangle[1] = polygons[i][(j+1)%polygons[i].size()];
 						triangle[2] = cIdx;
-						triangles.push_back( triangle );
+						for (int k = 0; k < 3; k ++) triangle.data[k] = polygon_cubes[i][k];
+            triangles.push_back( triangle );
 					}
 				}
 				else
@@ -357,14 +367,15 @@ int main( int argc , char* argv[] )
 					mat.GetTriangulation( _polygon , _triangles );
 					for( int j=0 ; j<_triangles.size() ; j++ )
 					{
-						TriangleIndex tri;
+						TriangleIndexWithData<int> tri;
 						for( int k=0 ; k<3 ; k++ ) tri[k] = polygons[i][ _triangles[j][k] ];
+						for (int k = 0; k < 3; k ++) tri.data[k] = polygon_cubes[i][k];
 						triangles.push_back( tri );
 					}
 				}
 			}
 
-			PlyWriteTriangles( Out.value , _vertices , triangles , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
+			PlyWriteCubeIdxTriangles( Out.value , _vertices , triangles , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
 			printf( "Vertices / Triangles: %d / %d\n" , (int)_vertices.size() , (int)triangles.size() );
 		}
 	}

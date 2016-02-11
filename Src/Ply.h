@@ -810,7 +810,13 @@ int PlyWriteTriangles( const char* fileName ,
 					   PlyProperty* properties , int propertyNum ,
 					   int file_type ,
 					   char** comments=NULL , const int& commentNum=0);
-
+template< class Vertex >
+int PlyWriteCubeIdxTriangles( const char* fileName ,
+					   const std::vector< Vertex >& vertices , 
+             const std::vector< TriangleIndexWithData<int> >& triangles ,
+					   PlyProperty* vertexProperties , int vertexPropertyNum ,
+					   int file_type ,
+					   char** comments=NULL , const int& commentNum=0);
 template< class Vertex >
 int PlyWriteColorTriangles( const char* fileName ,
 					   const std::vector< Vertex >& vertices , const std::vector< std::pair< TriangleIndex , Point3D< float > > >& triangles ,
