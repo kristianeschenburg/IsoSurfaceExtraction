@@ -320,6 +320,8 @@ int main( int argc , char* argv[] )
 	{
 		std::vector< PlyVertex< float > > _vertices( vertices.size() );
 		for( int i=0 ; i<vertices.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) _vertices[i].point[d] = vertices[i].p[d] * Dimensions.values[d];
+		// scale the cube index by the dimensions of a voxel 
+    for( int i=0 ; i<polygon_cubes.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) polygon_cubes[i][d] = polygon_cubes[i][d]*Dimensions.values[d]; 
 		if( Polygons.set )
 		{
 			PlyWritePolygons( Out.value , _vertices , polygons , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
