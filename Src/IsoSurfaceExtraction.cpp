@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -26,17 +26,18 @@ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF S
 DAMAGE.
 */
 
+#include "IsoSurfaceExtraction.h"
+
+#include <Src/Ply.h>
+#include <Src/MarchingCubes.h>
+#include <Src/Geometry.h>
+#include <Src/Array.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
 #include <map>
 #include <algorithm>
-
-#include <Src/CmdLineParser.h>
-#include <Src/Geometry.h>
-#include <Src/Ply.h>
-#include <Src/MarchingCubes.h>
-#include <Src/Array.h>
 
 const float DEFAULT_DIMENSIONS[] = { 1.f , 1.f , 1.f };
 cmdLineParameter< char* > In( "in" ) , Out( "out" );
@@ -73,7 +74,7 @@ float QuadraticInterpolant( float x0 , float x1 , float x2 , float x3 , float is
 	// Estimate the derivatives at x1 and x2
 	float dx1 = (x2-x0) / 2.f , dx2 = (x3-x1) / 2.f;
 	// Solve for the quadratic polynomial:
-	//		P(x) = a x^2 + b x + c 
+	//		P(x) = a x^2 + b x + c
 	// such that:
 	//		P(0) = x1 , P(1) = x2 , and minimizing || P'(0) - dx1 ||^2 + || P'(1) - dx2 ||^2
 	//	=>  c = x1 , a = x2 - x1 - b , and minimizing || b - dx1 ||^2 + || 2*a + b - dx2 ||^2
@@ -209,7 +210,7 @@ void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) v
     int ids[3];
     ids[0] = i; ids[1] = j; ids[2] = k;
     std::vector<int> id(std::begin(ids), std::end(ids));
-    
+
     float _values[Cube::CORNERS];
 		for( int cx=0 ; cx<2 ; cx++ ) for( int cy=0 ; cy<2 ; cy++ ) for( int cz=0 ; cz<2 ; cz++ ) _values[ Cube::CornerIndex( cx , cy , cz ) ] = values[ (i+cx) + (j+cy)*resX + (k+cz)*resX*resY ];
 		int mcIndex = fullCaseTable ? MarchingCubes::GetFullIndex( _values , isoValue ) : MarchingCubes::GetIndex( _values , isoValue );
@@ -234,7 +235,7 @@ void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) v
 				if( flip ) polygon[polygon.size()-1-v] = iter->second;
 				else       polygon[v] = iter->second;
 			}
-#pragma omp critical 
+#pragma omp critical
 {
       polygons.push_back( polygon );
       polygon_cubes.push_back( id );
@@ -279,7 +280,8 @@ int main( int argc , char* argv[] )
 			return EXIT_FAILURE;
 		}
 #pragma omp parallel for
-		for( int i=0 ; i<Resolution.values[0]*Resolution.values[1]*Resolution.values[2] ; i++ ) voxelValues[i] = (float)_voxelValues[i];
+		for( int i=0 ; i<Resolution.values[0]*Resolution.values[1]*Resolution.values[2] ; i++ )
+      voxelValues[i] = (float)_voxelValues[i];
 		DeletePointer( _voxelValues );
 	}
 	fclose( fp );
@@ -320,8 +322,8 @@ int main( int argc , char* argv[] )
 	{
 		std::vector< PlyVertex< float > > _vertices( vertices.size() );
 		for( int i=0 ; i<vertices.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) _vertices[i].point[d] = vertices[i].p[d] * Dimensions.values[d];
-		// scale the cube index by the dimensions of a voxel 
-    for( int i=0 ; i<polygon_cubes.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) polygon_cubes[i][d] = polygon_cubes[i][d]*Dimensions.values[d]; 
+		// scale the cube index by the dimensions of a voxel
+    for( int i=0 ; i<polygon_cubes.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) polygon_cubes[i][d] = polygon_cubes[i][d]*Dimensions.values[d];
 		if( Polygons.set )
 		{
 			PlyWritePolygons( Out.value , _vertices , polygons , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
@@ -330,7 +332,7 @@ int main( int argc , char* argv[] )
 		else
 		{
 			std::vector< TriangleIndexWithData<int> > triangles;
-      std::vector< std::vector< int > > triangle_cubes; 
+      std::vector< std::vector< int > > triangle_cubes;
 			MinimalAreaTriangulation< float > mat;
 
 			for( int i=0 ; i<polygons.size() ; i++ )

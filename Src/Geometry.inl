@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -60,11 +60,11 @@ inline void FactorEdgeKey( long long key , int& idx1 , int& idx2 )
 // Point //
 ///////////
 template<class Real,int Dim>
-void Point<Real,Dim>::Add		(const Point<Real,Dim>& p)	{	for(int d=0;d<Dim;d++)	coords[d]+=p.coords[d];	}
+inline void Point<Real,Dim>::Add		(const Point<Real,Dim>& p)	{	for(int d=0;d<Dim;d++)	coords[d]+=p.coords[d];	}
 template<class Real,int Dim>
-void Point<Real,Dim>::Scale		(Real s)					{	for(int d=0;d<Dim;d++)	coords[d]*=s;	}
+inline void Point<Real,Dim>::Scale		(Real s)					{	for(int d=0;d<Dim;d++)	coords[d]*=s;	}
 template<class Real,int Dim>
-Real Point<Real,Dim>::InnerProduct(const Point<Real,Dim>& p)	const
+inline Real Point<Real,Dim>::InnerProduct(const Point<Real,Dim>& p)	const
 {
 	Real dot=0;
 	for(int i=0;i<Dim;i++)	dot+=p.coords[i]*coords[i];
@@ -77,7 +77,7 @@ Real Point<Real,Dim>::InnerProduct(const Point<Real,Dim>& p)	const
 // Point3D //
 /////////////
 template< class Real >
-Point3D<Real> Point3D<Real>::CrossProduct( const Point3D<Real>& p1 , const Point3D<Real> & p2 )
+inline Point3D<Real> Point3D<Real>::CrossProduct( const Point3D<Real>& p1 , const Point3D<Real> & p2 )
 {
 	Point3D<Real> p;
 	p.coords[0]= p1.coords[1]*p2.coords[2]-p1.coords[2]*p2.coords[1];
@@ -91,17 +91,17 @@ Point3D<Real> Point3D<Real>::CrossProduct( const Point3D<Real>& p1 , const Point
 // Matrix //
 ////////////
 template<class Real,int Cols,int Rows>
-void Matrix<Real,Cols,Rows>::Add(const Matrix<Real,Cols,Rows>& m)
+inline void Matrix<Real,Cols,Rows>::Add(const Matrix<Real,Cols,Rows>& m)
 {
 	for(int i=0;i<Cols;i++)	for(int j=0;j<Rows;j++)	coords[i][j]+=m.coords[i][j];
 }
 template<class Real,int Cols,int Rows>
-void Matrix<Real,Cols,Rows>::Scale(Real s)
+inline void Matrix<Real,Cols,Rows>::Scale(Real s)
 {
 	for(int i=0;i<Cols;i++)	for(int j=0;j<Rows;j++)	coords[i][j]*=s;
 }
 template<class Real,int Cols,int Rows>
-Real Matrix<Real,Cols,Rows>::InnerProduct(const Matrix<Real,Cols,Rows>& m) const
+inline Real Matrix<Real,Cols,Rows>::InnerProduct(const Matrix<Real,Cols,Rows>& m) const
 {
 	Real dot=0;
 	for(int i=0;i<Cols;i++)
@@ -111,7 +111,7 @@ Real Matrix<Real,Cols,Rows>::InnerProduct(const Matrix<Real,Cols,Rows>& m) const
 }
 template<class Real,int Cols,int Rows>
 template<int Cols1>
-Matrix<Real,Cols1,Rows> Matrix<Real,Cols,Rows>::operator * (const Matrix<Real,Cols1,Cols>& m) const
+inline Matrix<Real,Cols1,Rows> Matrix<Real,Cols,Rows>::operator * (const Matrix<Real,Cols1,Cols>& m) const
 {
 	Matrix<Real,Cols1,Rows> n;
 	for(int i=0;i<Cols1;i++)
@@ -122,10 +122,10 @@ Matrix<Real,Cols1,Rows> Matrix<Real,Cols,Rows>::operator * (const Matrix<Real,Co
 }
 template<class Real,int Cols,int Rows>
 template<class Real2>
-Point<Real2,Rows> Matrix<Real,Cols,Rows>::operator () (const Point<Real2,Cols>& v) const	{	return (*this)*v;	}
+inline Point<Real2,Rows> Matrix<Real,Cols,Rows>::operator () (const Point<Real2,Cols>& v) const	{	return (*this)*v;	}
 template<class Real,int Cols,int Rows>
 template<class Real2>
-Point< Real2 , Rows > Matrix< Real , Cols , Rows >::operator * ( const Point< Real2 , Cols >& v ) const
+inline Point< Real2 , Rows > Matrix< Real , Cols , Rows >::operator * ( const Point< Real2 , Cols >& v ) const
 {
 	Point< Real2 , Rows > out;
 #if 1
@@ -143,7 +143,7 @@ Point< Real2 , Rows > Matrix< Real , Cols , Rows >::operator * ( const Point< Re
 	return out;
 }
 template<class Real,int Cols,int Rows>
-Matrix<Real,Rows,Cols> Matrix<Real,Cols,Rows>::transpose(void) const
+inline Matrix<Real,Rows,Cols> Matrix<Real,Cols,Rows>::transpose(void) const
 {
 	Matrix<Real,Rows,Cols> out;
 	for(int i=0;i<Cols;i++)
@@ -165,7 +165,7 @@ template<> inline double SquareMatrix< double , 3 >::determinant( void ) const
 		coords[2][0]*( coords[0][1]*coords[1][2] - coords[0][2]*coords[1][1] ) ;
 }
 template<class Real,int Dim>
-Real SquareMatrix<Real,Dim>::subDeterminant( int c , int r ) const
+inline Real SquareMatrix<Real,Dim>::subDeterminant( int c , int r ) const
 {
 	SquareMatrix<double,Dim-1> temp;
 	for( int i=0 , ii=0 ; i<Dim ; i++ )
@@ -183,7 +183,7 @@ Real SquareMatrix<Real,Dim>::subDeterminant( int c , int r ) const
 }
 
 template<class Real,int Dim>
-Real SquareMatrix<Real,Dim>::determinant( void ) const
+inline Real SquareMatrix<Real,Dim>::determinant( void ) const
 {
 	Real det = Real(1);
 	// Gaussian Elimination
@@ -208,20 +208,20 @@ Real SquareMatrix<Real,Dim>::determinant( void ) const
 	return det;
 }
 template< class Real , int Dim >
-Real SquareMatrix< Real , Dim >::trace( void ) const
+inline Real SquareMatrix< Real , Dim >::trace( void ) const
 {
 	Real tr = (Real)0;
 	for( int i=0 ; i<Dim ; i++ ) tr += coords[i][i];
 	return tr;
 }
 template< class Real , int Dim >
-SquareMatrix< Real , Dim > SquareMatrix< Real , Dim >::inverse( void ) const
+inline SquareMatrix< Real , Dim > SquareMatrix< Real , Dim >::inverse( void ) const
 {
 	bool success;
 	return inverse( success );
 }
 template< class Real , int Dim >
-SquareMatrix< Real , Dim > SquareMatrix< Real , Dim >::inverse( bool& success ) const
+inline SquareMatrix< Real , Dim > SquareMatrix< Real , Dim >::inverse( bool& success ) const
 {
 #if 1
 	// Gaussian Elimination
@@ -260,7 +260,7 @@ SquareMatrix< Real , Dim > SquareMatrix< Real , Dim >::inverse( bool& success ) 
 #endif
 }
 template< >
-SquareMatrix< float , 2 > SquareMatrix< float , 2 >::inverse( bool& success ) const
+inline SquareMatrix< float , 2 > SquareMatrix< float , 2 >::inverse( bool& success ) const
 {
 	SquareMatrix iXForm;
 	float det = ( coords[0][0]*coords[1][1]-coords[0][1]*coords[1][0] );
@@ -274,7 +274,7 @@ SquareMatrix< float , 2 > SquareMatrix< float , 2 >::inverse( bool& success ) co
 	return iXForm;
 }
 template< >
-SquareMatrix< double , 2 > SquareMatrix< double , 2 >::inverse( bool& success ) const
+inline SquareMatrix< double , 2 > SquareMatrix< double , 2 >::inverse( bool& success ) const
 {
 	SquareMatrix iXForm;
 	double det = ( coords[0][0]*coords[1][1]-coords[0][1]*coords[1][0] );
@@ -288,7 +288,7 @@ SquareMatrix< double , 2 > SquareMatrix< double , 2 >::inverse( bool& success ) 
 	return iXForm;
 }
 template<class Real,int Dim>
-void SquareMatrix<Real,Dim>::Multiply (const SquareMatrix<Real,Dim>& m)
+inline void SquareMatrix<Real,Dim>::Multiply (const SquareMatrix<Real,Dim>& m)
 {
 	SquareMatrix temp=*this;
 	for(int i=0;i<Dim;i++)
@@ -299,14 +299,14 @@ void SquareMatrix<Real,Dim>::Multiply (const SquareMatrix<Real,Dim>& m)
 		}
 }
 template<class Real,int Dim>
-void SquareMatrix<Real,Dim>::SetIdentity(void)
+inline void SquareMatrix<Real,Dim>::SetIdentity(void)
 {
 	memset(this->coords,0,sizeof(Real)*Dim*Dim);
 	for(int i=0;i<Dim;i++)	this->coords[i][i]=1;
 }
 template<class Real,int Dim>
 template<class Real2>
-Point<Real2,Dim-1> SquareMatrix<Real,Dim>::operator () (const Point<Real2,Dim-1>& v) const
+inline Point<Real2,Dim-1> SquareMatrix<Real,Dim>::operator () (const Point<Real2,Dim-1>& v) const
 {
 	Real2 scale=1;
 	Point<Real2,Dim-1> out;
@@ -322,7 +322,7 @@ Point<Real2,Dim-1> SquareMatrix<Real,Dim>::operator () (const Point<Real2,Dim-1>
 
 template<class Real>
 //Real Random(void){return Real(rand())/RAND_MAX;}
-Real Random( void )
+inline Real Random( void )
 {
 	static const unsigned long long ULL_RAND_MAX = ( unsigned long long )( RAND_MAX+1 );
 	static const double RAND_MAX_SQUARED = double( ULL_RAND_MAX * ULL_RAND_MAX - 1 );
@@ -332,14 +332,14 @@ Real Random( void )
 }
 
 template<class Real>
-Real Random2( void )
+inline Real Random2( void )
 {
 	long long temp= (long long) ( rand() )*RAND_MAX+rand();
 	return Real( (double(temp)/(RAND_MAX+1))/(RAND_MAX+1) );
 }
 
 template<class Real>
-Point2D<Real> RandomDiskPoint(void){
+inline Point2D<Real> RandomDiskPoint(void){
 	Point2D<Real> p;
 	while(1)
 	{
@@ -350,7 +350,7 @@ Point2D<Real> RandomDiskPoint(void){
 	}
 }
 template<class Real>
-Point3D<Real> RandomBallPoint(void){
+inline Point3D<Real> RandomBallPoint(void){
 	Point3D<Real> p;
 	while(1)
 	{
@@ -362,7 +362,7 @@ Point3D<Real> RandomBallPoint(void){
 	}
 }
 template<class Real>
-Point2D<Real> RandomCirclePoint(void)
+inline Point2D<Real> RandomCirclePoint(void)
 {
 	Point2D<Real> p = RandomDiskPoint<Real>();
 	Real l = Real(Length(p));
@@ -371,7 +371,7 @@ Point2D<Real> RandomCirclePoint(void)
 	return p;
 }
 template<class Real>
-Point3D<Real> RandomSpherePoint(void)
+inline Point3D<Real> RandomSpherePoint(void)
 {
 	Point3D<Real> p = RandomBallPoint<Real>();
 	Real l = Real(Length(p));
@@ -382,7 +382,7 @@ Point3D<Real> RandomSpherePoint(void)
 }
 
 template<class Real>
-XForm3x3<Real> RotationMatrix( const Point3D<Real>& axis , const Real& angle )
+inline XForm3x3<Real> RotationMatrix( const Point3D<Real>& axis , const Real& angle )
 {
 	double a = cos( angle / 2 );
 	double b , c , d;
@@ -391,7 +391,7 @@ XForm3x3<Real> RotationMatrix( const Point3D<Real>& axis , const Real& angle )
 	return RotationMatrix< Real >( Real( a ) , Real( b ) , Real( c ) , Real( d ) );
 }
 template<class Real>
-XForm3x3<Real> RotationMatrix( Real a , Real b , Real c , Real d )
+inline XForm3x3<Real> RotationMatrix( Real a , Real b , Real c , Real d )
 {
 	XForm3x3< Real > rot;
 	rot( 0 , 0 ) = 1 - 2*c*c - 2*d*d;
@@ -407,7 +407,7 @@ XForm3x3<Real> RotationMatrix( Real a , Real b , Real c , Real d )
 }
 
 template<class Real>
-XForm3x3<Real> RandomRotationMatrix( void )
+inline XForm3x3<Real> RandomRotationMatrix( void )
 {
 	Point3D< Real > axis = RandomSpherePoint< Real > ( );
 	Real angle = Real( 2.0 * M_PI * Random< Real > ( ) );
@@ -416,39 +416,39 @@ XForm3x3<Real> RandomRotationMatrix( void )
 
 
 template<class Real>
-double SquareLength(const Point2D<Real>& p){return p.coords[0]*p.coords[0]+p.coords[1]*p.coords[1];}
+inline double SquareLength(const Point2D<Real>& p){return p.coords[0]*p.coords[0]+p.coords[1]*p.coords[1];}
 
 template<class Real>
-double SquareLength(const Point3D<Real>& p){return p.coords[0]*p.coords[0]+p.coords[1]*p.coords[1]+p.coords[2]*p.coords[2];}
+inline double SquareLength(const Point3D<Real>& p){return p.coords[0]*p.coords[0]+p.coords[1]*p.coords[1]+p.coords[2]*p.coords[2];}
 
 template<class Real>
-double Length(const Point2D<Real>& p){return sqrt(SquareLength(p));}
+inline double Length(const Point2D<Real>& p){return sqrt(SquareLength(p));}
 
 template<class Real>
-double Length(const Point3D<Real>& p){return sqrt(SquareLength(p));}
+inline double Length(const Point3D<Real>& p){return sqrt(SquareLength(p));}
 
 template<class Real>
-double SquareDistance(const Point3D<Real>& p1,const Point3D<Real>& p2){
+inline double SquareDistance(const Point3D<Real>& p1,const Point3D<Real>& p2){
 	return (p1.coords[0]-p2.coords[0])*(p1.coords[0]-p2.coords[0])+(p1.coords[1]-p2.coords[1])*(p1.coords[1]-p2.coords[1])+(p1.coords[2]-p2.coords[2])*(p1.coords[2]-p2.coords[2]);
 }
 
 template<class Real>
-double DotProduct(const Point3D<Real>& p1,const Point3D<Real>& p2){
+inline double DotProduct(const Point3D<Real>& p1,const Point3D<Real>& p2){
 	return p1.coords[0]*p2.coords[0]+p1.coords[1]*p2.coords[1]+p1.coords[2]*p2.coords[2];
 }
 
 template<class Real>
-double Distance(const Point3D<Real>& p1,const Point3D<Real>& p2){return sqrt(SquareDistance(p1,p2));}
+inline double Distance(const Point3D<Real>& p1,const Point3D<Real>& p2){return sqrt(SquareDistance(p1,p2));}
 
 template <class Real>
-void CrossProduct(const Point3D<Real>& p1,const Point3D<Real>& p2,Point3D<Real>& p){
+inline void CrossProduct(const Point3D<Real>& p1,const Point3D<Real>& p2,Point3D<Real>& p){
 	p.coords[0]= p1.coords[1]*p2.coords[2]-p1.coords[2]*p2.coords[1];
 	p.coords[1]=-p1.coords[0]*p2.coords[2]+p1.coords[2]*p2.coords[0];
 	p.coords[2]= p1.coords[0]*p2.coords[1]-p1.coords[1]*p2.coords[0];
 }
 
 template<class Real>
-void Transform(const XForm4x4<Real>& xForm,const Point3D<Real>& p,Point3D<Real>& q)
+inline void Transform(const XForm4x4<Real>& xForm,const Point3D<Real>& p,Point3D<Real>& q)
 {
 	q.coords[0]=xForm.coords[0][0]*p.coords[0]+xForm.coords[1][0]*p.coords[1]+xForm.coords[2][0]*p.coords[2]+xForm.coords[3][0];
 	q.coords[1]=xForm.coords[0][1]*p.coords[0]+xForm.coords[1][1]*p.coords[1]+xForm.coords[2][1]*p.coords[2]+xForm.coords[3][1];
@@ -459,7 +459,7 @@ void Transform(const XForm4x4<Real>& xForm,const Point3D<Real>& p,Point3D<Real>&
 	q.coords[2]/=scl;
 }
 template<class Real>
-void TransformNoTranslate(const XForm4x4<Real>& xForm,const Point3D<Real>& p,Point3D<Real>& q)
+inline void TransformNoTranslate(const XForm4x4<Real>& xForm,const Point3D<Real>& p,Point3D<Real>& q)
 {
 	q.coords[0]=xForm.coords[0][0]*p.coords[0]+xForm.coords[1][0]*p.coords[1]+xForm.coords[2][0]*p.coords[2];
 	q.coords[1]=xForm.coords[0][1]*p.coords[0]+xForm.coords[1][1]*p.coords[1]+xForm.coords[2][1]*p.coords[2];
@@ -467,12 +467,12 @@ void TransformNoTranslate(const XForm4x4<Real>& xForm,const Point3D<Real>& p,Poi
 }
 
 template<class Real>
-Real SubDeterminant(const XForm4x4<Real>& xForm,int c1,int r1,int c2,int r2)
+inline Real SubDeterminant(const XForm4x4<Real>& xForm,int c1,int r1,int c2,int r2)
 {
 	return xForm.coords[c1][r1]*xForm.coords[c2][r2]-xForm.coords[c1][r2]*xForm.coords[c2][r1];
 }
 template<class Real>
-Real SubDeterminant(const XForm4x4<Real>& xForm,int c,int r)
+inline Real SubDeterminant(const XForm4x4<Real>& xForm,int c,int r)
 {
 	int c1,r1,c2,r2,row;
 	Real d=0,sgn=1.0;
@@ -489,7 +489,7 @@ Real SubDeterminant(const XForm4x4<Real>& xForm,int c,int r)
 		while(r1==row || r1==r){r1++;}
 		r2=r1+1;
 		while(r2==row || r2==r){r2++;}
-		
+
 		d+=sgn*xForm.coords[i][row]*SubDeterminant(xForm,c1,r1,c2,r2);
 		sgn*=-1.0;
 	}
@@ -498,7 +498,7 @@ Real SubDeterminant(const XForm4x4<Real>& xForm,int c,int r)
 
 
 template<class Real>
-Real Determinant(const XForm4x4<Real>& xForm)
+inline Real Determinant(const XForm4x4<Real>& xForm)
 {
 	Real d=Real(0);
 	for(int i=0;i<4;i++)
@@ -524,13 +524,13 @@ void InvertTransform(const XForm4x4<Real>& xForm,XForm4x4<Real>& iXForm)
 // MinimalAreaTriangulation //
 //////////////////////////////
 template <class Real>
-MinimalAreaTriangulation<Real>::MinimalAreaTriangulation(void)
+inline MinimalAreaTriangulation<Real>::MinimalAreaTriangulation(void)
 {
 	bestTriangulation=NULL;
 	midPoint=NULL;
 }
 template <class Real>
-MinimalAreaTriangulation<Real>::~MinimalAreaTriangulation(void)
+inline MinimalAreaTriangulation<Real>::~MinimalAreaTriangulation(void)
 {
 	if(bestTriangulation)
 		delete[] bestTriangulation;
@@ -540,7 +540,7 @@ MinimalAreaTriangulation<Real>::~MinimalAreaTriangulation(void)
 	midPoint=NULL;
 }
 template <class Real>
-void MinimalAreaTriangulation<Real>::GetTriangulation( const std::vector<Point3D<Real> >& vertices , std::vector<TriangleIndex>& triangles )
+inline void MinimalAreaTriangulation<Real>::GetTriangulation( const std::vector<Point3D<Real> >& vertices , std::vector<TriangleIndex>& triangles )
 {
 	triangles.resize( vertices.size() - 2 );
 	if( vertices.size()==3 )
@@ -611,7 +611,7 @@ void MinimalAreaTriangulation<Real>::GetTriangulation( const std::vector<Point3D
 	GetTriangulation( 0 , 1 , vertices , triangles , idx );
 }
 template <class Real>
-double MinimalAreaTriangulation<Real>::GetArea(const std::vector<Point3D<Real> >& vertices)
+inline double MinimalAreaTriangulation<Real>::GetArea(const std::vector<Point3D<Real> >& vertices)
 {
 	if(bestTriangulation)
 		delete[] bestTriangulation;
@@ -628,7 +628,7 @@ double MinimalAreaTriangulation<Real>::GetArea(const std::vector<Point3D<Real> >
 	return GetArea(0,1,vertices);
 }
 template<class Real>
-void MinimalAreaTriangulation<Real>::GetTriangulation( const int& i , const int& j , const std::vector<Point3D<Real> >& vertices , std::vector<TriangleIndex>& triangles , int& idx )
+inline void MinimalAreaTriangulation<Real>::GetTriangulation( const int& i , const int& j , const std::vector<Point3D<Real> >& vertices , std::vector<TriangleIndex>& triangles , int& idx )
 {
 	TriangleIndex tIndex;
 	size_t eCount=vertices.size();
@@ -648,7 +648,7 @@ void MinimalAreaTriangulation<Real>::GetTriangulation( const int& i , const int&
 }
 
 template<class Real>
-double MinimalAreaTriangulation<Real>::GetArea(const int& i,const int& j,const std::vector<Point3D<Real> >& vertices)
+inline double MinimalAreaTriangulation<Real>::GetArea(const int& i,const int& j,const std::vector<Point3D<Real> >& vertices)
 {
 	double a=FLT_MAX,temp;
 	size_t eCount=vertices.size();
@@ -708,7 +708,7 @@ double MinimalAreaTriangulation<Real>::GetArea(const int& i,const int& j,const s
 }
 
 template< class Real >
-void SplitTriangle( std::vector< Point3D< Real > >& vertices , TriangleIndex triangle , Point3D< Real > pNormal , Real pOffset ,
+inline void SplitTriangle( std::vector< Point3D< Real > >& vertices , TriangleIndex triangle , Point3D< Real > pNormal , Real pOffset ,
 				    std::vector< TriangleIndex >& backTriangles , std::vector< TriangleIndex >& frontTriangles )
 {
 	int bVerts[4] , fVerts[4] , bCount = 0 , fCount = 0;
@@ -771,7 +771,7 @@ void SplitTriangle( std::vector< Point3D< Real > >& vertices , TriangleIndex tri
 	}
 }
 template< class Real >
-void SplitTriangle( std::vector< Point3D< Real > >& vertices , TriangleIndex triangle , int direction , Real offset ,
+inline void SplitTriangle( std::vector< Point3D< Real > >& vertices , TriangleIndex triangle , int direction , Real offset ,
 				    std::vector< TriangleIndex >& backTriangles , std::vector< TriangleIndex >& frontTriangles )
 {
 	int bVerts[4] , fVerts[4] , bCount = 0 , fCount = 0;
@@ -835,7 +835,7 @@ void SplitTriangle( std::vector< Point3D< Real > >& vertices , TriangleIndex tri
 }
 
 template< class Real >
-int SplitEdge( Point3D< Real > v1 , Point3D< Real > v2 , Point3D< Real > pNormal , Real pOffset , Point3D< Real >& out1 , Point3D< Real >& out2 , Point3D< Real >& out3 )
+inline int SplitEdge( Point3D< Real > v1 , Point3D< Real > v2 , Point3D< Real > pNormal , Real pOffset , Point3D< Real >& out1 , Point3D< Real >& out2 , Point3D< Real >& out3 )
 {
 	Real values[2];
 	bool frontSet , backSet;
@@ -900,7 +900,7 @@ struct VertexList : public std::pair< unsigned int , int* >
 };
 
 template< class Facet >
-void MergeFacets
+inline void MergeFacets
 ( const Facet* facets , int facetCount , unsigned int (*FacetSize)( const Facet& ) ,
  std::vector< VertexList >& polygons ,
  std::vector< VertexList >& parents ,
@@ -1064,7 +1064,7 @@ int SplitEdge( std::vector< Point3D< Real > >& vertices , const int* edge , Poin
 
 // The assumption here is that the polygon can be split at most into two parts.
 template< class Real >
-void SplitPolygon(std::vector< Point3D< Real > >& vertices,
+inline void SplitPolygon(std::vector< Point3D< Real > >& vertices,
 			const std::vector< int >& polygon, Point3D< Real > pNormal,
 			Real pOffset, std::vector< int >& backPolygon,
 			std::vector< int >& frontPolygon )
@@ -1122,7 +1122,7 @@ void SplitPolygon(std::vector< Point3D< Real > >& vertices,
 	if( !frontSet ) frontPolygon.clear();
 }
 template< class Real >
-void SplitPolygon( std::vector< Point3D< Real > >& vertices , const int* polygon , Real* values , int count , Point3D< Real > pNormal , Real pOffset ,
+inline void SplitPolygon( std::vector< Point3D< Real > >& vertices , const int* polygon , Real* values , int count , Point3D< Real > pNormal , Real pOffset ,
 				   int* backPolygon , int& backCount , int* frontPolygon , int& frontCount )
 {
 	backCount = frontCount = 0;
@@ -1169,7 +1169,7 @@ void SplitPolygon( std::vector< Point3D< Real > >& vertices , const int* polygon
 }
 
 template< class Real >
-void SplitPolygon( std::vector< Point3D< Real > >& vertices , std::unordered_map< long long , int >* vTable , const std::vector< int >& polygon , Point3D< Real > pNormal , Real pOffset ,
+inline void SplitPolygon( std::vector< Point3D< Real > >& vertices , std::unordered_map< long long , int >* vTable , const std::vector< int >& polygon , Point3D< Real > pNormal , Real pOffset ,
 				   std::vector< int >& backPolygon , std::vector< int >& frontPolygon )
 {
 	std::vector< Real > values;
@@ -1242,7 +1242,7 @@ void SplitPolygon( std::vector< Point3D< Real > >& vertices , std::unordered_map
 }
 #if 1
 template< class Real >
-void SplitPolygon( std::vector< Point3D< Real > >& vertices , std::unordered_map< long long , int >* vTable , std::unordered_map< long long , int >* heTable ,
+inline void SplitPolygon( std::vector< Point3D< Real > >& vertices , std::unordered_map< long long , int >* vTable , std::unordered_map< long long , int >* heTable ,
 				   const int* polygon , Real* values , int count , Point3D< Real > pNormal , Real pOffset ,
 				   int* backPolygon , int& backCount , int* frontPolygon , int& frontCount )
 {
@@ -1380,7 +1380,7 @@ void SplitPolygon( std::vector< Point3D< Real > >& vertices , std::unordered_map
 }
 #endif
 template< class Real >
-void SplitPolygon( const std::vector< Point3D< Real > >& vertices ,
+inline void SplitPolygon( const std::vector< Point3D< Real > >& vertices ,
 				   const int* polygon , Real* values , int count , Point3D< Real > pNormal , Real pOffset ,
 				   int* backPolygon , int& backCount , int* frontPolygon , int& frontCount , std::vector< Point3D< Real > >& newVertices )
 {
@@ -1437,7 +1437,7 @@ void SplitPolygon( const std::vector< Point3D< Real > >& vertices ,
 }
 
 template< class Real >
-void BarycentricCoordinates( const Point3D< Real >& p , const Point3D< Real >& v1 , const Point3D< Real >& v2, const Point3D< Real >& v3 , Real& a0 , Real& a1 , Real& a2 )
+inline void BarycentricCoordinates( const Point3D< Real >& p , const Point3D< Real >& v1 , const Point3D< Real >& v2, const Point3D< Real >& v3 , Real& a0 , Real& a1 , Real& a2 )
 {
 	Point3D< Real > p0 =  p - v1;
 	Point3D< Real > p1 = v2 - v1;
@@ -1527,4 +1527,3 @@ inline void Incircle(const PointType &p0, const PointType &p1
     Point3D<Real> centerBaryCoords(a, b, c);
     center = BarycentricInterpolate(centerBaryCoords, p0, p1, p2);
 }
-

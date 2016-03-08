@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -28,6 +28,7 @@ DAMAGE.
 #ifndef GEOMETRY_INCLUDED
 #define GEOMETRY_INCLUDED
 #include <cmath>
+#include <cstring>
 #include <cassert>
 #include <complex>
 #include <vector>
@@ -55,7 +56,7 @@ public:
 	operator Point< Real2, Dim > ( void ) const
 	{
 		Point< Real2, Dim > p;
-		for( int d=0 ; d<Dim ; d++ ) p.coords[d] = Real2( coords[d] ); 
+		for( int d=0 ; d<Dim ; d++ ) p.coords[d] = Real2( coords[d] );
 		return p;
 	}
 	Real& operator [] (int idx) { return coords[idx]; }
@@ -132,7 +133,7 @@ public:
 	operator Matrix< Real2 , Cols , Rows > ( void ) const
 	{
 		Matrix< Real2, Cols , Rows > m;
-		for( int c=0 ; c<Cols ; c++ ) for ( int r=0 ; r<Rows ; r++ ) m.coords[c][r] = Real2( coords[c][r] ); 
+		for( int c=0 ; c<Cols ; c++ ) for ( int r=0 ; r<Rows ; r++ ) m.coords[c][r] = Real2( coords[c][r] );
 		return m;
 	}
 	template<int C,int R>
@@ -201,7 +202,7 @@ public:
 	operator Gradient< V2, Dim , _R2 > ( void ) const
 	{
 		Gradient< V2 , Dim , _R2 > g;
-		for( int d=0 ; d<Dim ; d++ ) g.gradients[d] = V2( gradients[d] ); 
+		for( int d=0 ; d<Dim ; d++ ) g.gradients[d] = V2( gradients[d] );
 		return g;
 	}
 
@@ -300,7 +301,7 @@ public:
 		for( int i=0 ; i<count ; i++ )
 		{
 			for( int k=0 ; k<Dim ; k++ ) for( int l=0 ; l<Dim ; l++ ) M( k , l ) += points[i][k] * points[i][l];
-			for( int j=0 ; j<count ; j++ ) for( int k=0 ; k<Dim ; k++ ) for( int l=0 ; l<Dim ; l++ ) M( k , l ) -= points[i][k] * points[j][l] / Real( count ); 
+			for( int j=0 ; j<count ; j++ ) for( int k=0 ; k<Dim ; k++ ) for( int l=0 ; l<Dim ; l++ ) M( k , l ) -= points[i][k] * points[j][l] / Real( count );
 
 			for( int d=0 ; d<Dim ; d++ ) constraint[d] += values[i] * points[i][d];
 			for( int j=0 ; j<count ; j++ ) for( int d=0 ; d<Dim ; d++ ) constraint[d] -= values[j] * points[i][d] / Real( count );
@@ -917,7 +918,7 @@ class ParameterizedTriangleIndex : public TriangleIndex
 {
 	using TriangleIndex::v;
 	int m_uv[3];
-public: 
+public:
 	ParameterizedTriangleIndex()
 		: TriangleIndex() { m_uv[0] = m_uv[1] = m_uv[2] = 0; }
 

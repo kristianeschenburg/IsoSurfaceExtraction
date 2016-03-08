@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution. 
+in the documentation and/or other materials provided with the distribution.
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission. 
+prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -32,33 +32,33 @@ DAMAGE.
 inline int strcasecmp( char* c1 , char* c2 ){ return _stricmp( c1 , c2 ); }
 #endif // WIN32
 
-template< > void cmdLineCleanUp< int    >( int*    t ){ }
-template< > void cmdLineCleanUp< float  >( float*  t ){ }
-template< > void cmdLineCleanUp< double >( double* t ){ }
-template< > void cmdLineCleanUp< char*  >( char** t ){ if( *t ) free( *t ) ; *t = NULL; }
-template< > int    cmdLineInitialize< int    >( void ){ return 0; }
-template< > float  cmdLineInitialize< float  >( void ){ return 0.f; }
-template< > double cmdLineInitialize< double >( void ){ return 0.; }
-template< > char*  cmdLineInitialize< char*  >( void ){ return NULL; }
-template< > void cmdLineWriteValue< int    >( int    t , char* str ){ sprintf( str , "%d" , t ); }
-template< > void cmdLineWriteValue< float  >( float  t , char* str ){ sprintf( str , "%f" , t ); }
-template< > void cmdLineWriteValue< double >( double t , char* str ){ sprintf( str , "%f" , t ); }
-template< > void cmdLineWriteValue< char*  >( char*  t , char* str ){ if( t ) sprintf( str , "%s" , t ) ; else str[0]=0; }
-template< > int    cmdLineCopy( int    t ){ return t;  }
-template< > float  cmdLineCopy( float  t ){ return t;  }
-template< > double cmdLineCopy( double t ){ return t;  }
+template< > inline void cmdLineCleanUp< int    >( int*    t ){ }
+template< > inline void cmdLineCleanUp< float  >( float*  t ){ }
+template< > inline void cmdLineCleanUp< double >( double* t ){ }
+template< > inline void cmdLineCleanUp< char*  >( char** t ){ if( *t ) free( *t ) ; *t = NULL; }
+template< > inline int    cmdLineInitialize< int    >( void ){ return 0; }
+template< > inline float  cmdLineInitialize< float  >( void ){ return 0.f; }
+template< > inline double cmdLineInitialize< double >( void ){ return 0.; }
+template< > inline char*  cmdLineInitialize< char*  >( void ){ return NULL; }
+template< > inline void cmdLineWriteValue< int    >( int    t , char* str ){ sprintf( str , "%d" , t ); }
+template< > inline void cmdLineWriteValue< float  >( float  t , char* str ){ sprintf( str , "%f" , t ); }
+template< > inline void cmdLineWriteValue< double >( double t , char* str ){ sprintf( str , "%f" , t ); }
+template< > inline void cmdLineWriteValue< char*  >( char*  t , char* str ){ if( t ) sprintf( str , "%s" , t ) ; else str[0]=0; }
+template< > inline int    cmdLineCopy( int    t ){ return t;  }
+template< > inline float  cmdLineCopy( float  t ){ return t;  }
+template< > inline double cmdLineCopy( double t ){ return t;  }
 #ifdef WIN32
-template< > char*  cmdLineCopy( char* t ){ return _strdup( t ); }
+template< > inline char*  cmdLineCopy( char* t ){ return _strdup( t ); }
 #else // !WIN32
-template< > char*  cmdLineCopy( char* t ){ return strdup( t ); }
+template< > inline char*  cmdLineCopy( char* t ){ return strdup( t ); }
 #endif // WIN32
-template< > int    cmdLineStringToType( const char* str ){ return atoi( str ); }
-template< > float  cmdLineStringToType( const char* str ){ return float( atof( str ) ); }
-template< > double cmdLineStringToType( const char* str ){ return double( atof( str ) ); }
+template< > inline int    cmdLineStringToType( const char* str ){ return atoi( str ); }
+template< > inline float  cmdLineStringToType( const char* str ){ return float( atof( str ) ); }
+template< > inline double cmdLineStringToType( const char* str ){ return double( atof( str ) ); }
 #ifdef WIN32
-template< > char*  cmdLineStringToType( const char* str ){ return _strdup( str ); }
+template< > inline char*  cmdLineStringToType( const char* str ){ return _strdup( str ); }
 #else // !WIN32
-template< > char*  cmdLineStringToType( const char* str ){ return  strdup( str ); }
+template< > inline char*  cmdLineStringToType( const char* str ){ return  strdup( str ); }
 #endif // WIN32
 
 
@@ -297,4 +297,3 @@ inline char** ReadWords(const char* fileName,int& cnt)
 	fclose(fp);
 	return names;
 }
-
