@@ -3,6 +3,8 @@ LIBTARGET=libIsoSurfaceExtraction.a
 FILES= \
 	IsoSurfaceExtraction.cpp \
 	ISEDriver.cpp
+BINCPP = \
+	IsoSurfaceExtractionBin.cpp
 SOURCE=$(FILES)
 
 CFLAGS += -fopenmp -Wno-deprecated
@@ -27,6 +29,7 @@ MD=mkdir
 
 
 OBJECTS=$(addprefix $(BIN), $(addsuffix .o, $(basename $(SOURCE))))
+BINOBJ=$(addprefix $(BIN), $(addsuffix .o, $(basename $(BINCPP))))
 
 all: CFLAGS += $(CFLAGS_RELEASE)
 all: LFLAGS += $(LFLAGS_RELEASE)
@@ -58,8 +61,8 @@ $(LIB)$(LIBTARGET): $(OBJECTS)
 $(BIN):
 	$(MD) -p $(BIN)
 
-$(BIN)$(TARGET): $(OBJECTS)
-	$(CXX) -o $@ $(OBJECTS) $(LFLAGS)
+$(BIN)$(TARGET): $(OBJECTS) $(BINOBJ)
+	$(CXX) -o $@ $(OBJECTS) $(BINOBJ) $(LFLAGS)
 
 $(BIN)%.o: $(SRC)%.c
 	mkdir -p $(BIN)

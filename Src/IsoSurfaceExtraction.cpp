@@ -28,43 +28,31 @@ DAMAGE.
 
 #include "IsoSurfaceExtraction.h"
 
-#include <Src/Ply.h>
-#include <Src/MarchingCubes.h>
-#include <Src/Geometry.h>
-#include <Src/Array.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
 #include <map>
 #include <algorithm>
 
-const float DEFAULT_DIMENSIONS[] = { 1.f , 1.f , 1.f };
-cmdLineParameter< char* > In( "in" ) , Out( "out" );
-cmdLineParameterArray< int , 3 > Resolution( "res" );
-cmdLineParameter< int > SmoothIterations( "sIters" , 0 );
-cmdLineParameter< float > IsoValue( "iso" , 0.f );
-cmdLineParameterArray< float , 3 > Dimensions( "dim" , DEFAULT_DIMENSIONS );
-cmdLineReadable Float( "float" ) , FullCaseTable( "full" ) , FlipOrientation( "flip" ) , QuadraticFit( "quadratic" ) , Polygons( "polygons" ) , NonManifold( "nonManifold" );
+#include <Src/Ply.h>
+#include <Src/MarchingCubes.h>
+#include <Src/Geometry.h>
+#include <Src/Array.h>
 
-cmdLineReadable* params[] = { &In , &Out , &Resolution , &IsoValue , &FullCaseTable , &FlipOrientation , &QuadraticFit , &Polygons , &SmoothIterations , &Float , &Dimensions , &NonManifold , NULL };
-
-void ShowUsage( const char* ex )
+struct IsoVertex
 {
-	printf( "Usage %s:\n" , ex );
-	printf( "\t --%s <input voxel grid>\n" , In.name );
-	printf( "\t --%s <input resolution>\n" , Resolution.name );
-	printf( "\t[--%s <output iso-surface>]\n" , Out.name );
-	printf( "\t[--%s <iso-value>=%f]\n" , IsoValue.name , IsoValue.value );
-	printf( "\t[--%s <smoothing iterations>=%d]\n" , SmoothIterations.name , SmoothIterations.value );
-	printf( "\t[--%s <dimensions of a voxel>=%f %f %f]\n" , Dimensions.name , Dimensions.values[0] , Dimensions.values[1] , Dimensions.values[2] );
-	printf( "\t[--%s]\n" , FullCaseTable.name );
-	printf( "\t[--%s]\n" , FlipOrientation.name );
-	printf( "\t[--%s]\n" , QuadraticFit.name );
-	printf( "\t[--%s]\n" , Polygons.name );
-	printf( "\t[--%s]\n" , NonManifold.name );
-	printf( "\t[--%s]\n" , Float.name );
-}
+	int dir , idx[3];
+	Point3D< float > p;
+	IsoVertex( Point3D< float > p , int dir , int x , int y , int z ){ this->p = p , this->dir = dir , idx[0] = x , idx[1] = y , idx[2] = z; }
+#define _ABS_( a ) ( (a)<0 ? -(a) : (a) )
+	static bool CoFacial( const IsoVertex& t1 , const IsoVertex& t2 )
+	{
+		int d[] = { _ABS_( t1.idx[0] - t2.idx[0] ) , _ABS_( t1.idx[1] - t2.idx[1] ) , _ABS_( t1.idx[2] - t2.idx[2] ) };
+		if( t1.dir==t2.dir ) return d[t1.dir]==0 && ( ( d[(t1.dir+1)%3]==0 && d[(t1.dir+2)%3]<=1 ) || ( d[(t1.dir+2)%3]==0 && d[(t1.dir+1)%3]<=1 ) );
+		else                 return d[ 3 - t1.dir - t2.dir ]==0 && d[t1.dir]<=1 && d[t2.dir]<=1;
+	}
+#undef _ABS_
+};
 
 float    LinearInterpolant( float x1 , float x2 , float isoValue ){ return ( isoValue-x1 ) / ( x2-x1 ); }
 float QuadraticInterpolant( float x0 , float x1 , float x2 , float x3 , float isoValue )
@@ -102,21 +90,6 @@ float QuadraticInterpolant( float x0 , float x1 , float x2 , float x3 , float is
 		else       return (float)r2;
 	}
 }
-
-struct IsoVertex
-{
-	int dir , idx[3];
-	Point3D< float > p;
-	IsoVertex( Point3D< float > p , int dir , int x , int y , int z ){ this->p = p , this->dir = dir , idx[0] = x , idx[1] = y , idx[2] = z; }
-#define _ABS_( a ) ( (a)<0 ? -(a) : (a) )
-	static bool CoFacial( const IsoVertex& t1 , const IsoVertex& t2 )
-	{
-		int d[] = { _ABS_( t1.idx[0] - t2.idx[0] ) , _ABS_( t1.idx[1] - t2.idx[1] ) , _ABS_( t1.idx[2] - t2.idx[2] ) };
-		if( t1.dir==t2.dir ) return d[t1.dir]==0 && ( ( d[(t1.dir+1)%3]==0 && d[(t1.dir+2)%3]<=1 ) || ( d[(t1.dir+2)%3]==0 && d[(t1.dir+1)%3]<=1 ) );
-		else                 return d[ 3 - t1.dir - t2.dir ]==0 && d[t1.dir]<=1 && d[t2.dir]<=1;
-	}
-#undef _ABS_
-};
 
 void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) values , float isoValue , std::vector< IsoVertex >& vertices , std::vector< std::vector< int > >& polygons, std::vector< std::vector< int > >& polygon_cubes , bool fullCaseTable , bool quadratic , bool flip )
 {
@@ -245,27 +218,19 @@ void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) v
 	DeletePointer( flags );
 #undef INDEX
 }
-int main( int argc , char* argv[] )
-{
-	cmdLineParse( argc-1 , argv+1 , params );
-	if( !Resolution.set && !In.set ){ ShowUsage( argv[0] ) ; return EXIT_FAILURE; }
 
-	Pointer( float ) voxelValues = NewPointer< float >( Resolution.values[0] * Resolution.values[1] * Resolution.values[2] );
+int IsoSurfaceExtraction( FILE* fp, int SmoothIterations, bool Float, float *Dims, int *Resolution, float IsoValue, bool Out, char *filename, bool Polygons, bool FullCaseTable, bool QuadraticFit, bool FlipOrientation, bool NonManifold ) {
+
+	Pointer( float ) voxelValues = NewPointer< float >( Resolution[0] * Resolution[1] * Resolution[2] );
 	if( !voxelValues )
 	{
-		fprintf( stderr , "[ERROR] Failed to allocte voxel grid: %d x %d x %d\n" , Resolution.values[0] , Resolution.values[1] , Resolution.values[2] );
+		fprintf( stderr , "[ERROR] Failed to allocte voxel grid: %d x %d x %d\n" , Resolution[0] , Resolution[1] , Resolution[2] );
 		return EXIT_FAILURE;
 	}
 
-	FILE* fp = fopen( In.value , "rb" );
-	if( !fp )
+	if( Float )
 	{
-		fprintf( stderr , "[ERROR] Failed to open file for reading: %s\n" , In.value );
-		return EXIT_FAILURE;
-	}
-	if( Float.set )
-	{
-		if( fread( voxelValues , sizeof( float ) , Resolution.values[0] * Resolution.values[1] * Resolution.values[2] , fp )!=Resolution.values[0]*Resolution.values[1]*Resolution.values[2] )
+		if( fread( voxelValues , sizeof( float ) , Resolution[0] * Resolution[1] * Resolution[2] , fp )!=Resolution[0]*Resolution[1]*Resolution[2] )
 		{
 			fprintf( stderr , "[ERROR] Failed to read voxel grid from file.\n" );
 			return EXIT_FAILURE;
@@ -273,60 +238,60 @@ int main( int argc , char* argv[] )
 	}
 	else
 	{
-		Pointer( unsigned char ) _voxelValues = NewPointer< unsigned char >( Resolution.values[0] * Resolution.values[1] * Resolution.values[2] );
-		if( fread( _voxelValues , sizeof( unsigned char ) , Resolution.values[0] * Resolution.values[1] * Resolution.values[2] , fp )!=Resolution.values[0]*Resolution.values[1]*Resolution.values[2] )
+		Pointer( unsigned char ) _voxelValues = NewPointer< unsigned char >( Resolution[0] * Resolution[1] * Resolution[2] );
+		if( fread( _voxelValues , sizeof( unsigned char ) , Resolution[0] * Resolution[1] * Resolution[2] , fp )!=Resolution[0]*Resolution[1]*Resolution[2] )
 		{
 			fprintf( stderr , "[ERROR] Failed to read voxel grid from file.\n" );
 			return EXIT_FAILURE;
 		}
-#pragma omp parallel for
-		for( int i=0 ; i<Resolution.values[0]*Resolution.values[1]*Resolution.values[2] ; i++ )
-      voxelValues[i] = (float)_voxelValues[i];
+	#pragma omp parallel for
+		for( int i=0 ; i<Resolution[0]*Resolution[1]*Resolution[2] ; i++ )
+			voxelValues[i] = (float)_voxelValues[i];
 		DeletePointer( _voxelValues );
 	}
 	fclose( fp );
 
-#define INDEX( x , y , z ) ( (x) + (y)*Resolution.values[0] + (z)*Resolution.values[0]*Resolution.values[1] )
-	if( SmoothIterations.value>0 )
+	#define INDEX( x , y , z ) ( (x) + (y)*Resolution[0] + (z)*Resolution[0]*Resolution[1] )
+	if( SmoothIterations>0 )
 	{
 		float stencil[] = { 0.5f , 1.f , 0.5f };
-		Pointer( float ) _voxelValues = NewPointer< float >( Resolution.values[0] * Resolution.values[1] * Resolution.values[2] );
-		for( int i=0 ; i<SmoothIterations.value ; i++ )
+		Pointer( float ) _voxelValues = NewPointer< float >( Resolution[0] * Resolution[1] * Resolution[2] );
+		for( int i=0 ; i<SmoothIterations ; i++ )
 		{
-#pragma omp parallel for
-			for( int x=0 ; x<Resolution.values[0] ; x++ ) for( int y=0 ; y<Resolution.values[1] ; y++ ) for( int z=0 ; z<Resolution.values[2] ; z++ )
+	#pragma omp parallel for
+			for( int x=0 ; x<Resolution[0] ; x++ ) for( int y=0 ; y<Resolution[1] ; y++ ) for( int z=0 ; z<Resolution[2] ; z++ )
 			{
 				float weightSum = 0.f;
 				_voxelValues[ INDEX(x,y,z) ] = 0.f;
 				for( int xx=-1 ; xx<=1 ; xx++ ) for( int yy=-1 ; yy<=1 ; yy++ ) for( int zz=-1; zz<=1 ; zz++ )
-					if( x+xx>=0 && x+xx<Resolution.values[0] && y+yy>=0 && y+yy<Resolution.values[1] && z+zz>=0 && z+zz<Resolution.values[2] )
+					if( x+xx>=0 && x+xx<Resolution[0] && y+yy>=0 && y+yy<Resolution[1] && z+zz>=0 && z+zz<Resolution[2] )
 					{
 						_voxelValues[ INDEX(x,y,z) ] += voxelValues[ INDEX(x+xx,y+yy,z+zz) ] * stencil[xx+1] * stencil[yy+1] * stencil[zz+1];
 						weightSum += stencil[xx+1] * stencil[yy+1] * stencil[zz+1];
 					}
 				_voxelValues[ INDEX(x,y,z) ] /= weightSum;
 			}
-			memcpy( voxelValues , _voxelValues , sizeof(float) * Resolution.values[0] * Resolution.values[1] * Resolution.values[2] );
+			memcpy( voxelValues , _voxelValues , sizeof(float) * Resolution[0] * Resolution[1] * Resolution[2] );
 		}
 		DeletePointer( _voxelValues );
 	}
-#undef INDEX
+	#undef INDEX
 
 	std::vector< IsoVertex > vertices;
 	std::vector< std::vector< int > > polygons;
-  std::vector< std::vector< int > > polygon_cubes;
-	ExtractIsoSurface( Resolution.values[0] , Resolution.values[1] , Resolution.values[2] , voxelValues , IsoValue.value , vertices , polygons , polygon_cubes, FullCaseTable.set , QuadraticFit.set , FlipOrientation.set );
+	std::vector< std::vector< int > > polygon_cubes;
+	ExtractIsoSurface( Resolution[0] , Resolution[1] , Resolution[2] , voxelValues , IsoValue , vertices , polygons , polygon_cubes, FullCaseTable , QuadraticFit , FlipOrientation );
 	DeletePointer( voxelValues );
 
-	if( Out.set )
+	if( Out )
 	{
 		std::vector< PlyVertex< float > > _vertices( vertices.size() );
-		for( int i=0 ; i<vertices.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) _vertices[i].point[d] = vertices[i].p[d] * Dimensions.values[d];
+		for( int i=0 ; i<vertices.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) _vertices[i].point[d] = vertices[i].p[d] * Dims[d];
 		// scale the cube index by the dimensions of a voxel
-    for( int i=0 ; i<polygon_cubes.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) polygon_cubes[i][d] = polygon_cubes[i][d]*Dimensions.values[d];
-		if( Polygons.set )
+    for( int i=0 ; i<polygon_cubes.size() ; i++ ) for( int d=0 ; d<3 ; d++ ) polygon_cubes[i][d] = polygon_cubes[i][d]*Dims[d];
+		if( Polygons )
 		{
-			PlyWritePolygons( Out.value , _vertices , polygons , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
+			PlyWritePolygons( filename , _vertices , polygons , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
 			printf( "Vertices / Polygons: %d / %d\n" , (int)vertices.size() , (int)polygons.size() );
 		}
 		else
@@ -341,7 +306,7 @@ int main( int argc , char* argv[] )
 				// we avoid creating a minimial area triangulation when it could introduce a new
 				// edge that is on a face of a cube
 				bool isCofacial = false;
-				if( !NonManifold.set )
+				if( !NonManifold )
 					for( int j=0 ; j<(int)polygons[i].size() ; j++ ) for( int k=0 ; k<j ; k++ )
 						if( (j+1)%polygons[i].size()!=k && (k+1)%polygons[i].size()!=j )
 							if( IsoVertex::CoFacial( vertices[ polygons[i][j] ] , vertices[ polygons[i][k] ] ) ) isCofacial = true;
@@ -352,7 +317,7 @@ int main( int argc , char* argv[] )
 					for( int j=0 ; j<(int)polygons[i].size() ; j++ ) plyVertex.point += vertices[ polygons[i][j] ].p;
 					plyVertex.point /= (float)polygons[i].size();
 					int cIdx = (int)_vertices.size();
-					for( int d=0 ; d<3 ; d++ ) plyVertex.point[d] *= Dimensions.values[d];
+					for( int d=0 ; d<3 ; d++ ) plyVertex.point[d] *= Dims[d];
 					_vertices.push_back( plyVertex );
 					for( int j=0 ; j<(int)polygons[i].size() ; j++ )
 					{
@@ -379,10 +344,9 @@ int main( int argc , char* argv[] )
 				}
 			}
 
-			PlyWriteCubeIdxTriangles( Out.value , _vertices , triangles , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
+			PlyWriteCubeIdxTriangles( filename , _vertices , triangles , PlyVertex< float >::WriteProperties , PlyVertex< float >::WriteComponents , PLY_BINARY_NATIVE );
 			printf( "Vertices / Triangles: %d / %d\n" , (int)_vertices.size() , (int)triangles.size() );
 		}
 	}
 
-	return EXIT_SUCCESS;
 }
