@@ -219,69 +219,13 @@ void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) v
 #undef INDEX
 }
 
-int IsoSurfaceExtraction( FILE* fp, int SmoothIterations, bool Float, float *Dims, int *Resolution, float IsoValue, bool Out, char *filename, bool Polygons, bool FullCaseTable, bool QuadraticFit, bool FlipOrientation, bool NonManifold ) {
-
-	Pointer( float ) voxelValues = NewPointer< float >( Resolution[0] * Resolution[1] * Resolution[2] );
-	if( !voxelValues )
-	{
-		fprintf( stderr , "[ERROR] Failed to allocte voxel grid: %d x %d x %d\n" , Resolution[0] , Resolution[1] , Resolution[2] );
-		return EXIT_FAILURE;
-	}
-
-	if( Float )
-	{
-		if( fread( voxelValues , sizeof( float ) , Resolution[0] * Resolution[1] * Resolution[2] , fp )!=Resolution[0]*Resolution[1]*Resolution[2] )
-		{
-			fprintf( stderr , "[ERROR] Failed to read voxel grid from file.\n" );
-			return EXIT_FAILURE;
-		}
-	}
-	else
-	{
-		Pointer( unsigned char ) _voxelValues = NewPointer< unsigned char >( Resolution[0] * Resolution[1] * Resolution[2] );
-		if( fread( _voxelValues , sizeof( unsigned char ) , Resolution[0] * Resolution[1] * Resolution[2] , fp )!=Resolution[0]*Resolution[1]*Resolution[2] )
-		{
-			fprintf( stderr , "[ERROR] Failed to read voxel grid from file.\n" );
-			return EXIT_FAILURE;
-		}
-	#pragma omp parallel for
-		for( int i=0 ; i<Resolution[0]*Resolution[1]*Resolution[2] ; i++ )
-			voxelValues[i] = (float)_voxelValues[i];
-		DeletePointer( _voxelValues );
-	}
-	fclose( fp );
-
-	#define INDEX( x , y , z ) ( (x) + (y)*Resolution[0] + (z)*Resolution[0]*Resolution[1] )
-	if( SmoothIterations>0 )
-	{
-		float stencil[] = { 0.5f , 1.f , 0.5f };
-		Pointer( float ) _voxelValues = NewPointer< float >( Resolution[0] * Resolution[1] * Resolution[2] );
-		for( int i=0 ; i<SmoothIterations ; i++ )
-		{
-	#pragma omp parallel for
-			for( int x=0 ; x<Resolution[0] ; x++ ) for( int y=0 ; y<Resolution[1] ; y++ ) for( int z=0 ; z<Resolution[2] ; z++ )
-			{
-				float weightSum = 0.f;
-				_voxelValues[ INDEX(x,y,z) ] = 0.f;
-				for( int xx=-1 ; xx<=1 ; xx++ ) for( int yy=-1 ; yy<=1 ; yy++ ) for( int zz=-1; zz<=1 ; zz++ )
-					if( x+xx>=0 && x+xx<Resolution[0] && y+yy>=0 && y+yy<Resolution[1] && z+zz>=0 && z+zz<Resolution[2] )
-					{
-						_voxelValues[ INDEX(x,y,z) ] += voxelValues[ INDEX(x+xx,y+yy,z+zz) ] * stencil[xx+1] * stencil[yy+1] * stencil[zz+1];
-						weightSum += stencil[xx+1] * stencil[yy+1] * stencil[zz+1];
-					}
-				_voxelValues[ INDEX(x,y,z) ] /= weightSum;
-			}
-			memcpy( voxelValues , _voxelValues , sizeof(float) * Resolution[0] * Resolution[1] * Resolution[2] );
-		}
-		DeletePointer( _voxelValues );
-	}
-	#undef INDEX
+int IsoSurfaceExtraction( ConstPointer( float ) voxelValues, float *Dims, int *Resolution, float IsoValue, bool Out, char *filename, bool Polygons, bool FullCaseTable, bool QuadraticFit, bool FlipOrientation, bool NonManifold ) {
 
 	std::vector< IsoVertex > vertices;
 	std::vector< std::vector< int > > polygons;
 	std::vector< std::vector< int > > polygon_cubes;
 	ExtractIsoSurface( Resolution[0] , Resolution[1] , Resolution[2] , voxelValues , IsoValue , vertices , polygons , polygon_cubes, FullCaseTable , QuadraticFit , FlipOrientation );
-	DeletePointer( voxelValues );
+
 
 	if( Out )
 	{
@@ -348,5 +292,69 @@ int IsoSurfaceExtraction( FILE* fp, int SmoothIterations, bool Float, float *Dim
 			printf( "Vertices / Triangles: %d / %d\n" , (int)_vertices.size() , (int)triangles.size() );
 		}
 	}
+
+}
+
+int IsoSurfaceExtractionFile( FILE* fp, int SmoothIterations, bool Float, float *Dims, int *Resolution, float IsoValue, bool Out, char *filename, bool Polygons, bool FullCaseTable, bool QuadraticFit, bool FlipOrientation, bool NonManifold ) {
+	Pointer( float ) voxelValues = NewPointer< float >( Resolution[0] * Resolution[1] * Resolution[2] );
+	if( !voxelValues )
+	{
+		fprintf( stderr , "[ERROR] Failed to allocte voxel grid: %d x %d x %d\n" , Resolution[0] , Resolution[1] , Resolution[2] );
+		return EXIT_FAILURE;
+	}
+
+	if( Float )
+	{
+		if( fread( voxelValues , sizeof( float ) , Resolution[0] * Resolution[1] * Resolution[2] , fp )!=Resolution[0]*Resolution[1]*Resolution[2] )
+		{
+			fprintf( stderr , "[ERROR] Failed to read voxel grid from file.\n" );
+			return EXIT_FAILURE;
+		}
+	}
+	else
+	{
+		Pointer( unsigned char ) _voxelValues = NewPointer< unsigned char >( Resolution[0] * Resolution[1] * Resolution[2] );
+		if( fread( _voxelValues , sizeof( unsigned char ) , Resolution[0] * Resolution[1] * Resolution[2] , fp )!=Resolution[0]*Resolution[1]*Resolution[2] )
+		{
+			fprintf( stderr , "[ERROR] Failed to read voxel grid from file.\n" );
+			return EXIT_FAILURE;
+		}
+	#pragma omp parallel for
+		for( int i=0 ; i<Resolution[0]*Resolution[1]*Resolution[2] ; i++ )
+			voxelValues[i] = (float)_voxelValues[i];
+		DeletePointer( _voxelValues );
+	}
+	fclose( fp );
+
+	#define INDEX( x , y , z ) ( (x) + (y)*Resolution[0] + (z)*Resolution[0]*Resolution[1] )
+	if( SmoothIterations>0 )
+	{
+		float stencil[] = { 0.5f , 1.f , 0.5f };
+		Pointer( float ) _voxelValues = NewPointer< float >( Resolution[0] * Resolution[1] * Resolution[2] );
+		for( int i=0 ; i<SmoothIterations ; i++ )
+		{
+	#pragma omp parallel for
+			for( int x=0 ; x<Resolution[0] ; x++ ) for( int y=0 ; y<Resolution[1] ; y++ ) for( int z=0 ; z<Resolution[2] ; z++ )
+			{
+				float weightSum = 0.f;
+				_voxelValues[ INDEX(x,y,z) ] = 0.f;
+				for( int xx=-1 ; xx<=1 ; xx++ ) for( int yy=-1 ; yy<=1 ; yy++ ) for( int zz=-1; zz<=1 ; zz++ )
+					if( x+xx>=0 && x+xx<Resolution[0] && y+yy>=0 && y+yy<Resolution[1] && z+zz>=0 && z+zz<Resolution[2] )
+					{
+						_voxelValues[ INDEX(x,y,z) ] += voxelValues[ INDEX(x+xx,y+yy,z+zz) ] * stencil[xx+1] * stencil[yy+1] * stencil[zz+1];
+						weightSum += stencil[xx+1] * stencil[yy+1] * stencil[zz+1];
+					}
+				_voxelValues[ INDEX(x,y,z) ] /= weightSum;
+			}
+			memcpy( voxelValues , _voxelValues , sizeof(float) * Resolution[0] * Resolution[1] * Resolution[2] );
+		}
+		DeletePointer( _voxelValues );
+	}
+	#undef INDEX
+
+	int ret = IsoSurfaceExtraction( voxelValues, Dims, Resolution, IsoValue, Out, filename, Polygons, FullCaseTable, QuadraticFit, FlipOrientation, NonManifold );
+	DeletePointer( voxelValues );
+
+	return(ret);
 
 }

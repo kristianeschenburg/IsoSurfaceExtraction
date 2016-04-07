@@ -79,7 +79,7 @@ int main( int argc , char* argv[] )
 
   char *filename = Out.set ? Out.value : NULL;
 
-  return IsoSurfaceExtraction( fp, SmoothIterations.value, Float.set, Dimensions.values, Resolution.values, IsoValue.value, Out.set, filename, Polygons.set, FullCaseTable.set, QuadraticFit.set, FlipOrientation.set, NonManifold.set );
+  return IsoSurfaceExtractionFile( fp, SmoothIterations.value, Float.set, Dimensions.values, Resolution.values, IsoValue.value, Out.set, filename, Polygons.set, FullCaseTable.set, QuadraticFit.set, FlipOrientation.set, NonManifold.set );
 
 	return EXIT_SUCCESS;
 }
