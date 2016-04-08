@@ -19,40 +19,42 @@ void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, int *Resolution, f
     printf("Proceeding to extract value %f.\n", isoValue);
   }
 
-  // allocate an array for our grid data and copy in grid data
-  /*
-  Pointer( float ) voxelValues = NewPointer< float >( Resolution[0] * Resolution[1] * Resolution[2] );
-  if( !voxelValues )
-	{
-		fprintf( stderr , "[ERROR] Failed to allocte voxel grid: %d x %d x %d\n" , Resolution[0] , Resolution[1] , Resolution[2] );
-		//return EXIT_FAILURE;
-	}
-  #pragma omp parallel for
-    for( int i=0 ; i<Resolution[0]*Resolution[1]*Resolution[2] ; i++ )
-      voxelValues[i] = (float)grid[i];
-    //DeletePointer( _voxelValues );
-    */
+  int SmoothIterations = 0;
+  // ndstore has the opposite convention for dims / resolution as IsoSurfaceExtraction
+  // ndstore dims = voxelgrid size = isosurfaceextraction resolution
+  // ndstore resolution = size of a voxel = isosurfaceextraction dims
+  float NewDims[3];
+  for (int i = 0; i < 3; i++) {
+    NewDims[i] = (float)Resolution[i];
+  }
 
+  int NewResolution[3];
+  for (int i = 0; i < 3; i++) {
+    NewResolution[i] = (int)dims[i];
+  }
 
+  printf("New dims: %f %f %f\n", NewDims[0], NewDims[1], NewDims[2]);
+  printf("New Res: %d %d %d\n", NewResolution[0], NewResolution[1], NewResolution[2]);
+  bool Out = true;
+  char filename[] = "/tmp/test1.ply";
 
+  bool Polygons = false; // we want triangles
+  bool FullCaseTable = false;
+  bool QuadraticFit = false;
+  bool NonManifold = false;
 
-  //LoadGrid( grid, dims );
+  int ret = IsoSurfaceExtractionVoxelGrid( grid, SmoothIterations, NewDims, NewResolution, isoValue, Out, filename, Polygons, FullCaseTable, QuadraticFit, flip, NonManifold );
 
-  // create an array to transcribe the input data into
-  //Pointer( float ) voxelValues = NewPointer< float >( dims[0]*dims[1]*dims[2] );
-
-  //for (int i = 0; i <dims[0]*dims[1]*dims[2]; i++)
-  //  voxelValues[i] = (float)grid[i];
+  if (ret) {
+    printf("Success!\n");
+  }
+  else {
+    printf("Failure\n");
+  }
 
 }
 
-// void ExtractIsoSurface( int resX , int resY , int resZ , ConstPointer( float ) values , float isoValue , std::vector< IsoVertex >& vertices , std::vector< std::vector< int > >& polygons, std::vector< std::vector< int > >& polygon_cubes , bool fullCaseTable , bool quadratic , bool flip )
-
-
-
 void alexTest( float x, unsigned int *y ) {
-
-
 
     char name[] = "Alex";
     printf("Hey go, it's %s in C! ", name);

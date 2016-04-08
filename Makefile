@@ -50,7 +50,8 @@ lib: $(LIB)$(LIBTARGET)
 clean:
 	rm -f $(BIN)$(TARGET)
 	rm -f $(OBJECTS)
-	rm -f $(LIBTARGET)
+	rm -f $(LIB)$(LIBTARGET)
+	rm -f $(BINOBJ)
 
 $(LIB):
 	$(MD) -p $(LIB)
