@@ -18,8 +18,7 @@
 extern "C" {
 #endif
 
-  void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, int *res, float isoValue, bool flip );
-  void alexTest( float x, unsigned int *y );
+  void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, float *res, float isoValue, bool flip, char* filename );
 
 #ifdef __cplusplus
 }

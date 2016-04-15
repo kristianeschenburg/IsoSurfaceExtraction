@@ -8,7 +8,7 @@
 extern "C" {
 #endif
 
-void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, int *Resolution, float isoValue, bool flip ) {
+void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, float *Resolution, float isoValue, bool flip, char *filename ) {
 
   printf("Received a voxel grid with first three values: %d %d %d\n", grid[0], grid[1], grid[2]);
   printf("The grid has dimensions %d x %d x %d with resolution %d x %d x %d\n", dims[0], dims[1], dims[2], Resolution[0], Resolution[1], Resolution[2]);
@@ -36,7 +36,7 @@ void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, int *Resolution, f
   printf("New dims: %f %f %f\n", NewDims[0], NewDims[1], NewDims[2]);
   printf("New Res: %d %d %d\n", NewResolution[0], NewResolution[1], NewResolution[2]);
   bool Out = true;
-  char filename[] = "/tmp/test1.ply";
+  //char filename[] = "/tmp/test1.ply";
 
   bool Polygons = false; // we want triangles
   bool FullCaseTable = false;
@@ -45,7 +45,7 @@ void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, int *Resolution, f
 
   int ret = IsoSurfaceExtractionVoxelGrid( grid, SmoothIterations, NewDims, NewResolution, isoValue, Out, filename, Polygons, FullCaseTable, QuadraticFit, flip, NonManifold );
 
-  if (ret) {
+  if (!ret) {
     printf("Success!\n");
   }
   else {
@@ -53,18 +53,6 @@ void ExtractIsoSurfaceDriver( uint32_t *grid, uint32_t *dims, int *Resolution, f
   }
 
 }
-
-void alexTest( float x, unsigned int *y ) {
-
-    char name[] = "Alex";
-    printf("Hey go, it's %s in C! ", name);
-    printf("Thanks for passing in %f.\n", x);
-    printf("Also received the following array values: %d, %d, %d\n", y[0], y[1], y[2]);
-    // what happens if we change a value?
-    y[0] = 10;
-    return;
-}
-
 
 #ifdef __cplusplus
 }
